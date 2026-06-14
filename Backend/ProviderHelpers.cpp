@@ -133,10 +133,17 @@ namespace LastMusicPlayer::Backend
         {
             if (apiToken.empty()) return url;
             std::wstring text{ url.c_str() };
+            std::wstring fragment;
+            if (auto fragmentStart = text.find(L'#'); fragmentStart != std::wstring::npos)
+            {
+                fragment = text.substr(fragmentStart);
+                text.resize(fragmentStart);
+            }
             wchar_t separator = (text.find(L'?') == std::wstring::npos) ? L'?' : L'&';
             text += separator;
             text += L"access_token=";
             text += EscapeUrlComponent(apiToken).c_str();
+            text += fragment;
             return winrt::hstring{ text };
         }
 
@@ -163,7 +170,11 @@ namespace LastMusicPlayer::Backend
             }
 
             std::wstring text{ streamUrl.c_str() };
-            auto lowered = ToLowerCopy(streamUrl);
+            if (auto fragmentStart = text.find(L"#lmp="); fragmentStart != std::wstring::npos)
+            {
+                text.resize(fragmentStart);
+            }
+            auto lowered = ToLowerCopy(winrt::hstring{ text });
             auto pathIdx = lowered.find(L"/v1/stream/");
             if (pathIdx == std::wstring::npos)
             {

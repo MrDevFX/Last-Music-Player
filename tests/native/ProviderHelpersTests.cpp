@@ -86,6 +86,23 @@ namespace
         Expect(Contains(stream, L"access_token=fresh%20key"), "returned stream URLs should get a fresh access token");
     }
 
+    void TestPersistedImportedStreamUrl()
+    {
+        auto stream = provider::BuildProviderStreamUrl(
+            L"http://old-provider.example.test/v1/stream/service%3Aissued-id?url=https%3A%2F%2Fcatalog.example.test%2Ftracks%2Fabc&media_token=short#lmp=12345",
+            L"https://catalog.example.test/tracks/abc",
+            L"service",
+            L"",
+            L"https://provider.example.test/",
+            L"fresh key");
+
+        Expect(StartsWith(stream, L"https://provider.example.test/v1/stream/service%3Aissued-id"), "persisted stream ids should be preserved");
+        Expect(Contains(stream, L"?url=https%3A%2F%2Fcatalog.example.test%2Ftracks%2Fabc"), "persisted stream URLs should keep their source query");
+        Expect(!Contains(stream, L"media_token="), "persisted stream URLs should drop stale media tokens");
+        Expect(Contains(stream, L"access_token=fresh%20key"), "persisted stream URLs should send the fresh access token");
+        Expect(!Contains(stream, L"#lmp="), "internal storage fragments should not reach playback");
+    }
+
     void TestDirectStreamUrl()
     {
         auto stream = provider::BuildProviderStreamUrl(
@@ -126,6 +143,7 @@ int wmain()
         TestExistingStreamUrlIsStable();
         TestProviderStreamUrl();
         TestReturnedStreamUrlWins();
+        TestPersistedImportedStreamUrl();
         TestDirectStreamUrl();
         TestFallbackTokenAndUnsupportedSources();
         std::wcout << L"ProviderHelpersTests passed" << std::endl;
