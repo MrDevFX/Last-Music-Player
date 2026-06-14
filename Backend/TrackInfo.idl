@@ -1,0 +1,37 @@
+namespace Last_Music_Player
+{
+    [default_interface]
+    [marshaling_behavior(agile)]
+    [threading(both)]
+    runtimeclass TrackInfo
+    {
+        TrackInfo();
+        String Title;
+        String Artist;
+        Microsoft.UI.Xaml.Media.Imaging.BitmapImage AlbumArt;
+        String ArtworkUrl;
+        String ArtworkMode;
+        String ArtworkTitle;
+        String ArtworkCaption;
+        String ArtworkGlyph;
+        Double ImageArtworkOpacity;
+        Double GeneratedArtworkOpacity;
+        Windows.Storage.StorageFile File;
+        String FilePath;
+        Double DurationSeconds;
+        String Album;
+        String Genre;
+        String DateAdded;
+        Double DateAddedSortKey;
+        String Duration;
+        Int32 Index;
+        Int64 CatalogId;
+        String SourceKind;
+        String Provider;
+        String SourceUrl;
+        String SourceLabel;
+        Boolean IsLiked;
+        String LikeActionText{ get; };
+        Int32 TrackCount;
+    }
+}

@@ -1,0 +1,46 @@
+# Build outputs
+x64/
+Debug/
+Release/
+AppPackages/
+Last Mus.*/
+
+# Compiled installer output (built by ISCC from installer/LastMusicPlayer.iss)
+installer/Output/
+
+# Visual Studio / WinUI generated state
+.vs/
+Generated Files/
+/XamlMetaDataProvider.cpp
+/XamlMetaDataProvider.idl
+*.aps
+*.user
+*.VC.db
+*.VC.opendb
+*.suo
+
+# Logs and crash diagnostics
+*.log
+*.dmp
+lmp-*.txt
+System.Drawing.Drawing2D.GraphicsPath
+
+# Local app/runtime state
+.sisyphus/
+
+# Design handoff/reference docs
+design_handoff_winui_refresh/
+
+# Dependencies restored by tooling
+packages/
+node_modules/
+
+# Local secrets / build-private config (Discord client id, provider auth tokens, etc.)
+.env
+.env.local
+Backend/AppSecrets.local.h
+
+# OS/editor noise
+Thumbs.db
+Desktop.ini
+.DS_Store

@@ -1,0 +1,687 @@
+#pragma once
+#include "MainWindow.g.h"
+#include "Backend/TrackInfo.h"
+#include "Backend/DatabaseEngine.h"
+#include "Backend/CastEngine.h"
+#include "Backend/LyricsService.h"
+
+#include <winrt/Windows.Storage.Pickers.h>
+#include <winrt/Windows.Storage.h>
+#include <winrt/Windows.Storage.FileProperties.h>
+#include <winrt/Windows.Storage.Search.h>
+#include <winrt/Windows.Foundation.Collections.h>
+#include <winrt/Microsoft.UI.Xaml.Media.Imaging.h>
+#include <winrt/Windows.Storage.Streams.h>
+#include <winrt/Windows.Media.h>
+#include <winrt/Windows.Media.Playback.h>
+#include <winrt/Microsoft.UI.Xaml.h>
+#include <winrt/Microsoft.UI.Xaml.Input.h>
+#include <winrt/Microsoft.UI.Xaml.Media.h>
+#include <winrt/Microsoft.UI.Xaml.Controls.h>
+#include <winrt/Windows.System.h>
+#include <winrt/Microsoft.UI.Windowing.h>
+#include <array>
+#include <vector>
+#include <utility>
+#include <unordered_map>
+#include <unordered_set>
+#include <string>
+#include <memory>
+#include <atomic>
+
+namespace LastMusicPlayer::Backend { class TrayIcon; class DiscordPresence; class ProviderClient; }
+
+namespace winrt::Last_Music_Player::implementation
+{
+    struct MainWindow : MainWindowT<MainWindow>
+    {
+        MainWindow();
+
+        void HomeButton_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        void SettingsNav_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        void BrowseButton_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        winrt::Windows::Foundation::IAsyncAction ChangeFolderButton_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        winrt::Windows::Foundation::IAsyncAction OpenFolderButton_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        winrt::Windows::Foundation::IAsyncAction ScanMusicButton_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        winrt::Windows::Foundation::IAsyncAction HomeRecentGridView_ItemClick(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::Controls::ItemClickEventArgs const& args);
+        winrt::Windows::Foundation::IAsyncAction MusicListView_ItemClick(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::Controls::ItemClickEventArgs const& args);
+        void PlayPauseButton_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        void NextButton_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        void PreviousButton_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        void Card_PointerEntered(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::Input::PointerRoutedEventArgs const& e);
+        void Card_PointerExited(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::Input::PointerRoutedEventArgs const& e);
+        void PlaylistCard_PointerEntered(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::Input::PointerRoutedEventArgs const& e);
+        void PlaylistCard_PointerExited(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::Input::PointerRoutedEventArgs const& e);
+        void GlobalSearchBox_GotFocus(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        void GlobalSearchBox_LostFocus(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        void GlobalSearchBox_KeyDown(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::Input::KeyRoutedEventArgs const& args);
+        void GlobalSearchBox_TextChanged(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::Controls::TextChangedEventArgs const& args);
+        void HomeSearchButton_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        void HomeListenAll_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        void HomeMadeForAll_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        void HomeMixCard_Tapped(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::Input::TappedRoutedEventArgs const& args);
+        winrt::Windows::Foundation::IAsyncAction HomeRecentlyAdded_ItemClick(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::Controls::ItemClickEventArgs const& args);
+        winrt::Windows::Foundation::IAsyncAction HomeMostPlayed_ItemClick(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::Controls::ItemClickEventArgs const& args);
+        winrt::Windows::Foundation::IAsyncAction HomeLiked_ItemClick(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::Controls::ItemClickEventArgs const& args);
+        void HomeLikedSeeAll_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        void HomeMostPlayedSeeAll_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        void HomeRowMenuPlayNow_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        void UpdateMadeForCardLabels();
+        void UpdateHomeGreeting();
+        void ApplyUserDisplayName();
+        void DisplayNameBox_TextChanged(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::Controls::TextChangedEventArgs const& args);
+        void DisplayNameBox_KeyDown(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::Input::KeyRoutedEventArgs const& args);
+        void DisplayNameSave_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        winrt::Windows::Foundation::IAsyncAction SearchResult_ItemClick(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::Controls::ItemClickEventArgs const& args);
+        void RailTab_UpNext_Tapped(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::Input::TappedRoutedEventArgs const& e);
+        void RailTab_Lyrics_Tapped(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::Input::TappedRoutedEventArgs const& e);
+        winrt::Windows::Foundation::IAsyncAction BrowseRescan_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        void BrowsePlayAll_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        void BrowseChip_Checked(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        void BrowseChip_Unchecked(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        winrt::Windows::Foundation::IAsyncAction BrowseGridView_ItemClick(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::Controls::ItemClickEventArgs const& args);
+        void BrowseList_ContainerContentChanging(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::Controls::ContainerContentChangingEventArgs const& args);
+        void BrowseGrid_ContainerContentChanging(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::Controls::ContainerContentChangingEventArgs const& args);
+        void BrowseRowPlay_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        void BrowseRowMenuPlayNow_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        void BrowseRowMenuPlayNext_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        void BrowseRowMenuAddToQueue_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        void BrowseRowMenuLike_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        void BrowseRowMenuArtist_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        void BrowseRowMenuAlbum_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        void BrowseListView_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        void BrowseGridView_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        void BrowseSort_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        void LibraryButton_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        winrt::Windows::Foundation::IAsyncAction LibraryAddFolder_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        winrt::Windows::Foundation::IAsyncAction LibraryCreateAlbum_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        winrt::Windows::Foundation::IAsyncAction LibraryImportAlbum_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        winrt::Windows::Foundation::IAsyncAction LibraryCreatePlaylist_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        winrt::Windows::Foundation::IAsyncAction LibraryImportPlaylist_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        winrt::Windows::Foundation::IAsyncAction LibraryAlbumDelete_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        winrt::Windows::Foundation::IAsyncAction LibraryPlaylistRename_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        winrt::Windows::Foundation::IAsyncAction LibraryPlaylistDelete_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        void LibraryPlaylistFilter_Checked(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        void LibraryTab_Checked(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        winrt::Windows::Foundation::IAsyncAction LibraryGroup_ItemClick(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::Controls::ItemClickEventArgs const& args);
+        winrt::Windows::Foundation::IAsyncAction SidebarPlaylist_ItemClick(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::Controls::ItemClickEventArgs const& args);
+        void LibraryDetailBack_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        void LibraryDetailPlay_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        void LibraryDetailShuffle_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        winrt::Windows::Foundation::IAsyncAction LibrarySongsListView_ItemClick(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::Controls::ItemClickEventArgs const& args);
+        void LibrarySongs_ContainerContentChanging(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::Controls::ContainerContentChangingEventArgs const& args);
+        void LibraryDetailTracks_ContainerContentChanging(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::Controls::ContainerContentChangingEventArgs const& args);
+        void LibraryRowMenuPlayNow_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        void LibraryRowMenuPlayNext_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        void LibraryRowMenuAddToQueue_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        winrt::Windows::Foundation::IAsyncAction LibraryRowMenuAddToPlaylist_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        void LibraryRowMenuRemoveFromPlaylist_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        void LibraryRowMenuAlbum_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        // Group-card context-menu handlers — operate on an album / artist /
+        // genre / manual or auto playlist sentinel TrackInfo (carries
+        // SourceKind + SourceUrl/Title, not a single playable track). Used
+        // by the right-click flyouts on Library grid cards and the Sidebar
+        // pinned-playlist rows. Mix tiles on Home use the HomeMixMenu_*
+        // siblings instead because the source is m_homeMixes, not the DB.
+        void LibraryGroupMenuPlayNow_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        void LibraryGroupMenuPlayNext_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        void LibraryGroupMenuAddToQueue_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        void LibraryGroupMenuShuffle_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        // Daily Mix card menu handlers — sender's Tag carries the mix id
+        // ("daily1".."daily5", "repeat", "discover", "timecapsule",
+        // "fresh"). Tracks come straight from m_homeMixes; no DB hop.
+        void HomeMixMenuPlayNow_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        void HomeMixMenuPlayNext_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        void HomeMixMenuAddToQueue_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        void HomeMixMenuShuffle_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        void QueuePlayNow_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        void QueuePlayNext_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        void QueueMoveUp_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        void QueueMoveDown_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        void QueueRemove_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        void UpNextQueue_DragItemsCompleted(winrt::Microsoft::UI::Xaml::Controls::ListViewBase const& sender, winrt::Microsoft::UI::Xaml::Controls::DragItemsCompletedEventArgs const& args);
+        void LikedSongsButton_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        void LikeCurrentTrack_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        void SettingsSection_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        void ThemeSegment_Checked(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        winrt::Windows::Foundation::IAsyncAction PlayProviderTest_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        void ScanCancel_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        winrt::Windows::Foundation::IAsyncAction OpenDataFolder_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        winrt::Windows::Foundation::IAsyncAction ShowLicenses_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        winrt::Windows::Foundation::IAsyncAction ResetDefaults_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        winrt::Windows::Foundation::IAsyncAction WipeAllData_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        void SettingsToggle_Toggled(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        void SettingsCombo_SelectionChanged(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::Controls::SelectionChangedEventArgs const& args);
+        void SettingsSlider_ValueChanged(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::Controls::Primitives::RangeBaseValueChangedEventArgs const& args);
+        void FormatChip_Toggled(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        void AccentSwatch_Tapped(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::Input::TappedRoutedEventArgs const& args);
+        void OnAppWindowClosing(winrt::Microsoft::UI::Windowing::AppWindow const& sender, winrt::Microsoft::UI::Windowing::AppWindowClosingEventArgs const& args);
+        void AccelSearch_Invoked(winrt::Microsoft::UI::Xaml::Input::KeyboardAccelerator const& sender, winrt::Microsoft::UI::Xaml::Input::KeyboardAcceleratorInvokedEventArgs const& args);
+        void AccelPrev_Invoked(winrt::Microsoft::UI::Xaml::Input::KeyboardAccelerator const& sender, winrt::Microsoft::UI::Xaml::Input::KeyboardAcceleratorInvokedEventArgs const& args);
+        void AccelNext_Invoked(winrt::Microsoft::UI::Xaml::Input::KeyboardAccelerator const& sender, winrt::Microsoft::UI::Xaml::Input::KeyboardAcceleratorInvokedEventArgs const& args);
+        void AccelPlayPause_Invoked(winrt::Microsoft::UI::Xaml::Input::KeyboardAccelerator const& sender, winrt::Microsoft::UI::Xaml::Input::KeyboardAcceleratorInvokedEventArgs const& args);
+        void MainBodyGrid_SizeChanged(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::SizeChangedEventArgs const& args);
+        void LibraryHeaderBar_SizeChanged(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::SizeChangedEventArgs const& args);
+        void Row_PointerEntered(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::Input::PointerRoutedEventArgs const& e);
+        void Row_PointerExited(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::Input::PointerRoutedEventArgs const& e);
+        void OnMediaEnded(winrt::Windows::Media::Playback::MediaPlayer const& sender, winrt::Windows::Foundation::IInspectable const& args);
+        // Auto-recovery for the live-streamed track: on a mid-stream network
+        // failure, re-open the source and resume near the last position. The
+        // pending-seek is applied in OnMediaOpened once the media is ready.
+        void OnMediaFailed(winrt::Windows::Media::Playback::MediaPlayer const& sender, winrt::Windows::Media::Playback::MediaPlayerFailedEventArgs const& args);
+        void OnMediaOpened(winrt::Windows::Media::Playback::MediaPlayer const& sender, winrt::Windows::Foundation::IInspectable const& args);
+        void VolumeSlider_ValueChanged(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::Controls::Primitives::RangeBaseValueChangedEventArgs const& args);
+        void TimelineSlider_ValueChanged(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::Controls::Primitives::RangeBaseValueChangedEventArgs const& e);
+        void ShuffleButton_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        void RepeatButton_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        void QueueButton_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        void EqualizerButton_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        void MuteButton_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        void CastButton_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        void ExpandButton_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        void FsCloseButton_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        void CastDevice_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        winrt::Windows::Foundation::IAsyncOperation<bool> ScanLibraryAsync(winrt::Windows::Storage::StorageFolder folder);
+        void PruneMissingLocalTracks();
+
+        winrt::Windows::Foundation::IAsyncAction UpdateSMTCMetadata(winrt::Last_Music_Player::TrackInfo track);
+        void EqualizerPreset_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        void EqResetButton_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args);
+        void EqPreampSlider_ValueChanged(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::Controls::Primitives::RangeBaseValueChangedEventArgs const& args);
+
+    private:
+        enum class LoadState
+        {
+            NotLoaded,
+            Loading,
+            Loaded,
+            Dirty
+        };
+
+        enum class PlaybackSink
+        {
+            Local,
+            Cast
+        };
+        struct LibraryScanState
+        {
+            bool InProgress{ false };
+            bool CancelRequested{ false };
+            uint64_t Epoch{ 0 };
+        };
+
+        struct PlaybackQueueState
+        {
+            // The playback CONTEXT — whatever surface the user last
+            // clicked from (Browse query, Library, Playlist detail). Gets
+            // wholesale-replaced by SetPlaybackQueue on every tile click;
+            // Queue takes priority over CurrentPlaylist for navigation.
+            std::vector<winrt::Last_Music_Player::TrackInfo> CurrentPlaylist;
+            int CurrentTrackIndex{ -1 };
+            std::vector<winrt::Last_Music_Player::TrackInfo> Queue;
+            int QueueIndex{ -1 };
+
+            // The USER QUEUE — items the user added explicitly via right-
+            // click Add to Queue / Play Next. Lives separately so it
+            // survives context replacement when the user clicks a new
+            // tile elsewhere (most music apps behave this way). AdvanceQueue
+            // pops UserQueue.front() ahead of walking the context. In-memory
+            // only — not persisted across app launches.
+            std::vector<winrt::Last_Music_Player::TrackInfo> UserQueue;
+
+            bool ShuffleEnabled{ false };
+            int RepeatMode{ 0 }; // 0 = Off, 1 = Repeat All, 2 = Repeat One
+            std::vector<int> ShuffleOrder;
+            size_t ShuffleCursor{ 0 };
+        };
+
+        // Autoplay "radio": when the user-setting is on and the playback
+        // context is about to run dry, we fetch related tracks (the provider's
+        // radio/related endpoint, falling back to artist search) and append them
+        // so playback continues seamlessly. Epoch cancels a stale in-flight
+        // fetch when the context changes; SeenKeys prevents the radio from
+        // re-injecting songs already queued this session.
+        struct AutoplayState
+        {
+            bool InFlight{ false };
+            uint64_t Epoch{ 0 };
+            bool ResumeWhenReady{ false }; // queue hit the end mid-fetch; auto-start when tracks land
+            std::unordered_set<std::wstring> SeenKeys;
+        };
+
+        struct CastSessionState
+        {
+            winrt::hstring DeviceId;
+            winrt::hstring DeviceName;
+            bool IsPlaying{ false };
+            bool EngineWired{ false };
+            double CurrentSeconds{ 0.0 };
+            double DurationSeconds{ 0.0 };
+            uint64_t ProgressStampMs{ 0 };
+            uint64_t LastStatusRequestMs{ 0 };
+        };
+
+        struct HomeHydrationState
+        {
+            uint64_t StartupEpoch{ 0 };
+            uint64_t HomeEpoch{ 0 };
+            uint64_t MixRefreshId{ 0 };
+            bool InFlight{ false };
+            bool Pending{ false };
+            bool PendingRefresh{ false };
+        };
+
+        struct AppStateTrackSnapshot
+        {
+            winrt::hstring Title;
+            winrt::hstring Artist;
+            winrt::hstring Album;
+            winrt::hstring Genre;
+            winrt::hstring FilePath;
+            winrt::hstring ArtworkUrl;
+            winrt::hstring DateAdded;
+            winrt::hstring Duration;
+            winrt::hstring SourceKind;
+            winrt::hstring Provider;
+            winrt::hstring SourceUrl;
+            winrt::hstring SourceLabel;
+            winrt::hstring Key;
+            double DurationSeconds{ 0.0 };
+            double DateAddedSortKey{ 0.0 };
+            bool IsLiked{ false };
+            uint32_t PlayCount{ 0 };
+            uint64_t LastPlayedOrder{ 0 };
+        };
+
+        struct AppStateSnapshot
+        {
+            winrt::hstring LastTrackPath;
+            double Volume{ 0.7 };
+            uint64_t HomePlaySequence{ 0 };
+            std::vector<AppStateTrackSnapshot> HomeHistory;
+        };
+
+        void SaveAppState();
+        void ClearSavedAppState();
+        void LoadAppState();
+        void ApplyAppStateSnapshot(AppStateSnapshot const& snapshot);
+        AppStateSnapshot BuildAppStateSnapshot();
+        // Resume-on-launch: restore the last-played track into the player bar
+        // (paused, ready to resume on the first Play press). Skips tracks that
+        // are no longer available — e.g. a local file deleted off disk.
+        void RestoreLastPlayedTrack(AppStateSnapshot const& snapshot);
+        void RestoreNowPlayingBar(winrt::Last_Music_Player::TrackInfo const& track);
+        static AppStateTrackSnapshot MakeAppStateTrackSnapshot(
+            winrt::Last_Music_Player::TrackInfo const& track,
+            winrt::hstring const& key,
+            uint32_t playCount,
+            uint64_t lastPlayedOrder);
+        static winrt::hstring SerializeAppStateSnapshot(AppStateSnapshot const& snapshot);
+        static AppStateSnapshot ParseAppStateSnapshot(winrt::hstring const& payload);
+        static winrt::Last_Music_Player::TrackInfo TrackFromAppStateSnapshot(AppStateTrackSnapshot const& snapshot);
+        void QueueStartupDataLoad(winrt::hstring savedLibraryPath);
+        winrt::Windows::Foundation::IAsyncAction HydrateStartupAsync(winrt::hstring savedLibraryPath);
+        winrt::Windows::Foundation::IAsyncAction HydrateHomeAsync(bool refreshProvider);
+        void FinishHomeHydration();
+        winrt::Windows::Foundation::IAsyncAction EnsureBrowseHydratedAsync(bool reset);
+        winrt::Windows::Foundation::IAsyncAction AppendBrowsePageAsync();
+        winrt::Windows::Foundation::IAsyncAction LoadBrowseQueueAndPlayAsync(winrt::Last_Music_Player::TrackInfo clickedTrack);
+        winrt::Windows::Foundation::IAsyncAction HydrateLibraryTabAsync(winrt::hstring tab, bool force);
+        winrt::Windows::Foundation::IAsyncAction AppendLibrarySongsPageAsync();
+        winrt::Windows::Foundation::IAsyncAction HydrateLibraryDetailTracksAsync();
+        winrt::Windows::Foundation::IAsyncAction LoadLibrarySongsQueueAndPlayAsync(winrt::Last_Music_Player::TrackInfo clickedTrack);
+        winrt::Windows::Foundation::IAsyncAction LoadLibraryDetailQueueAndPlayAsync(winrt::Last_Music_Player::TrackInfo clickedTrack);
+        // Pre-shuffles the detail-view track set then queues + plays it.
+        // Drives the Shuffle button next to Play in the library detail
+        // header — first played track is random, Up Next rail visibly
+        // matches the random order (RebuildUpNextQueue is linear).
+        winrt::Windows::Foundation::IAsyncAction LoadLibraryDetailQueueAndShuffleAsync();
+        void MarkLibraryViewsDirty();
+        void LoadSettingsIntoUi();
+        void ApplyThemeFromSetting();
+        void ApplyShowAlbumArt();
+        void ApplyWindowsMediaControls();
+        void ApplyAccentColor(winrt::hstring const& hex);
+        std::wstring ScanFormatsCsvFromChips();
+        std::vector<winrt::hstring> ScanFileExtensions();
+        void EnsureTrayIcon();
+        winrt::Windows::Foundation::IAsyncAction PopulateOutputDevicesAsync();
+        winrt::Windows::Foundation::IAsyncAction ApplyOutputDeviceAsync();
+        void ApplyDiscordPresence();
+        void UpdateAboutStats();
+        void UpdateDiscordNowPlaying(winrt::Last_Music_Player::TrackInfo const& track);
+        winrt::Windows::Foundation::IAsyncAction ResolveDiscordArtworkAsync(
+            winrt::hstring trackTitle, winrt::hstring trackArtist);
+        void RebuildUpNextQueue();
+        // Kick off background disk-prefetch of the next few upcoming remote
+        // tracks so they play from a local file (no live stream) when reached.
+        void PrefetchUpcomingStreams();
+        // Autoplay: if enabled and the context is nearly exhausted, kick off an
+        // async fetch of related tracks and append them to the playback queue.
+        void MaybeExtendAutoplayQueue();
+        winrt::fire_and_forget ExtendAutoplayQueueAsync(winrt::Last_Music_Player::TrackInfo seed, uint64_t epoch);
+        void EnsurePlaybackQueueSeeded();
+        void CommitQueueOrderFromUpNext();
+        void RemoveTrackFromQueue(winrt::Last_Music_Player::TrackInfo const& track);
+        void MoveQueueTrack(winrt::Last_Music_Player::TrackInfo const& track, int delta);
+        void AdvanceQueue(int direction, bool isAutoAdvance);
+        void RebuildShuffleOrder();
+        void UpdateShuffleRepeatVisuals();
+        void RestorePlaybackPreferences();
+        void UpdateVolumeIcon(double volume);
+        void QueueVolumePersist(double volume);
+        void FlushPendingVolumePersist();
+        void UpdateFullScreenNowPlaying(winrt::Last_Music_Player::TrackInfo const& track);
+        winrt::Windows::Foundation::IAsyncAction PopulateCastMenuAsync();
+        winrt::Windows::Foundation::IAsyncAction StartCastAsync(winrt::hstring deviceId, winrt::hstring host, winrt::hstring deviceName);
+        void StopCastAsync();
+        void WireCastEngine();
+        void ClearCastCallbacks();
+        void TransportPlay();
+        void TransportPause();
+        void TransportSeekSeconds(double seconds);
+        void TransportSetVolume(double volume);
+        void UpdateNavSelection(winrt::hstring const& key);
+        void SetRailTab(bool upNext);
+        void ApplyRightRailWidth();
+        void EnsureAccentBrushes();
+        void UpdateBrowseScopeLabel();
+        void UpdateBrowseStats();
+        void LoadCatalogFromDatabase();
+        void RefreshLibraryCatalogViews();
+        void RefreshAutoPlaylists();
+        void UpdateLibraryActionButtons();
+        int64_t PersistTrackForPlaylist(winrt::Last_Music_Player::TrackInfo const& track);
+        LastMusicPlayer::Backend::TrackQuery CurrentBrowseQuery(uint32_t offset, uint32_t limit) const;
+        LastMusicPlayer::Backend::TrackQuery CurrentLibrarySongsQuery(uint32_t offset, uint32_t limit) const;
+        LastMusicPlayer::Backend::TrackQuery CurrentLibraryDetailQuery(uint32_t offset, uint32_t limit) const;
+        void ApplyBrowseFilterSort();
+        void AppendTrackPage(std::vector<winrt::Last_Music_Player::TrackInfo> const& source, winrt::Windows::Foundation::Collections::IObservableVector<winrt::Last_Music_Player::TrackInfo> target, uint32_t pageSize);
+        void AppendBrowsePage();
+        void MaybeAppendBrowsePage(uint32_t itemIndex);
+        void AppendLibrarySongsPage();
+        void MaybeAppendLibrarySongsPage(uint32_t itemIndex);
+        void AppendLibraryDetailPage();
+        void MaybeAppendLibraryDetailPage(uint32_t itemIndex);
+        void SelectBrowseFilter(std::wstring const& filter);
+        void SetBrowseGridMode(bool gridMode);
+        void QueueAndPlayVisible(std::vector<winrt::Last_Music_Player::TrackInfo> const& tracks, winrt::Last_Music_Player::TrackInfo const& clickedTrack);
+        void QueueAndPlayObservable(winrt::Windows::Foundation::Collections::IObservableVector<winrt::Last_Music_Player::TrackInfo> const& tracks, winrt::Last_Music_Player::TrackInfo const& clickedTrack);
+        winrt::Last_Music_Player::TrackInfo TrackFromActionSender(winrt::Windows::Foundation::IInspectable const& sender);
+        void PlayBrowseTrack(winrt::Last_Music_Player::TrackInfo const& track);
+        void PlayNextFromBrowse(winrt::Last_Music_Player::TrackInfo const& track);
+        void AddBrowseTrackToQueue(winrt::Last_Music_Player::TrackInfo const& track);
+        // Bulk variants that preserve list order (the single-track Play next
+        // path prepends to UserQueue, so a naive loop reverses the input).
+        // Both filter through IsPlayableHomeTrack + dedup against UserQueue
+        // and call RebuildUpNextQueue once at the end.
+        void PlayNextFromBrowseBulk(std::vector<winrt::Last_Music_Player::TrackInfo> const& tracks);
+        void AddBrowseTracksToQueueBulk(std::vector<winrt::Last_Music_Player::TrackInfo> const& tracks);
+        // Resolves a group-card sentinel TrackInfo (album / artist / genre /
+        // playlist / auto-playlist) to its concrete playable tracks. Uses
+        // DatabaseService().LoadTracksForGroup for DB-backed kinds and
+        // m_homeMixes for auto-playlists (synthesized client-side).
+        std::vector<winrt::Last_Music_Player::TrackInfo> TracksForGroupCard(winrt::Last_Music_Player::TrackInfo const& group);
+        // Force-enables shuffle (no toggle) — used by group-menu Shuffle
+        // items so the user can shuffle a group without it depending on
+        // the prior shuffle state. Persists the setting + refreshes icons.
+        void EnsureShuffleOn();
+        winrt::Windows::Foundation::IAsyncAction AddTrackToPlaylistAsync(winrt::Last_Music_Player::TrackInfo track);
+        void ToggleTrackLiked(winrt::Last_Music_Player::TrackInfo const& track);
+        void OpenBrowseTrackArtist(winrt::Last_Music_Player::TrackInfo const& track);
+        void OpenBrowseTrackAlbum(winrt::Last_Music_Player::TrackInfo const& track);
+        void ShowLibraryDetail(
+            winrt::hstring const& kind,
+            winrt::hstring const& key,
+            winrt::hstring const& title,
+            winrt::hstring const& subtitle,
+            winrt::Microsoft::UI::Xaml::Media::ImageSource const& fallbackArt = nullptr);
+        void ApplyLibraryDetailPlaylistCollage();
+        void HideLibraryDetail();
+        void ApplyPlaybackProgress(double currentSeconds, double totalSeconds);
+        void RefreshPlaybackProgress();
+        void HydrateLyricsForCurrentTrack();
+        // Debounced track-change entry point: starts/restarts a 350ms
+        // DispatcherTimer that finally calls HydrateLyricsForCurrentTrack().
+        // Rapid skips collapse into a single provider request instead
+        // of firing N concurrent ones.
+        void QueueLyricsHydration();
+        winrt::fire_and_forget HydrateLyricsAsync(
+            winrt::hstring artist,
+            winrt::hstring title,
+            winrt::hstring album,
+            int64_t durationMs,
+            winrt::hstring sourceUrl,
+            std::wstring key,
+            uint64_t epoch);
+        void RenderLyricsResult(LastMusicPlayer::Backend::LyricsResult const& result);
+        void UpdateActiveLyricLine(int64_t positionMs);
+        void ResetLyricsViewToEmpty(winrt::hstring const& message);
+        void PersistTrackPlayback(winrt::Last_Music_Player::TrackInfo const& track);
+        void UpdateLikeButton(winrt::Last_Music_Player::TrackInfo const& track);
+        void UpdateSettingsSection(winrt::hstring const& key);
+        void ApplySettingsResponsiveLayout(double width);
+        void ApplyLibraryHeaderResponsive(double width);
+        void BuildEqualizerBars();
+        void SyncActiveEqualizerPreset();
+        void PopulateHomeFromLibrary();
+        void BuildHomeMixes();
+        void PlayHomeMix(winrt::hstring const& mixId);
+        void RecordHomePlayback(winrt::Last_Music_Player::TrackInfo const& track);
+        winrt::Windows::Foundation::IAsyncAction RefreshHomeProviderMixesAsync(uint64_t refreshId);
+        bool PlayTrack(winrt::Last_Music_Player::TrackInfo const& track, bool gaplessTransitioned = false);
+        void ApplyEqualizerFromSettings();
+        void ApplyEqualizerPreset(std::array<double, 10> const& gains);
+        winrt::Windows::Media::Core::MediaSource BuildMediaSourceForTrack(winrt::Last_Music_Player::TrackInfo const& track);
+        int ComputeAutoAdvanceIndex(int currentIdx, int queueSize) const;
+        void RefreshGaplessLookahead();
+        void OnPlaybackListCurrentItemChanged(
+            winrt::Windows::Media::Playback::MediaPlaybackList const& sender,
+            winrt::Windows::Media::Playback::CurrentMediaPlaybackItemChangedEventArgs const& args);
+        void ApplyGaplessSetting();
+        void SetPlaybackQueue(std::vector<winrt::Last_Music_Player::TrackInfo> const& tracks, int selectedIndex);
+        void EnterSearchMode(winrt::hstring const& query);
+        void ExitSearchMode();
+        void RunDebouncedHomeSearch();
+        winrt::Windows::Foundation::IAsyncAction RunHomeSearchAsync();
+        winrt::Windows::Foundation::IAsyncAction RunHomeSearchNowAsync(winrt::hstring query, uint64_t requestId);
+        void SetLibraryScanUi(bool visible, winrt::hstring const& status, bool canCancel);
+
+        LibraryScanState m_libraryScan;
+        PlaybackQueueState m_queue;
+        AutoplayState m_autoplay;
+        // Consecutive PlayTrack-failure counter. Bounded retry inside
+        // AdvanceQueue uses this to skip past broken tracks instead of
+        // looping on the same one, and to give up after a few failures
+        // rather than spinning forever on a fully-broken queue.
+        int m_advancePlayFailures{ 0 };
+        // Last sampled playback position (seconds) for the local sink. Used to
+        // resume near where a stream dropped when OnMediaFailed re-opens it.
+        double m_lastPlaybackPositionSeconds{ 0.0 };
+        // Bounded stream auto-recovery: cap reopen attempts within a window so a
+        // genuinely broken/unsupported source can't loop forever.
+        int m_streamRecoverAttempts{ 0 };
+        unsigned long long m_lastStreamRecoverTickMs{ 0 };
+        // >= 0 means "seek here once the (re-opened) media reports MediaOpened".
+        double m_pendingResumeSeekSeconds{ -1.0 };
+        winrt::Windows::Foundation::Collections::IObservableVector<winrt::Last_Music_Player::TrackInfo> m_homeTracks{
+            winrt::single_threaded_observable_vector<winrt::Last_Music_Player::TrackInfo>()
+        };
+        winrt::Windows::Foundation::Collections::IObservableVector<winrt::Last_Music_Player::TrackInfo> m_recentlyAddedTracks{
+            winrt::single_threaded_observable_vector<winrt::Last_Music_Player::TrackInfo>()
+        };
+        // Top tracks by PlayCount — populates the Most Played carousel.
+        winrt::Windows::Foundation::Collections::IObservableVector<winrt::Last_Music_Player::TrackInfo> m_homeMostPlayedTracks{
+            winrt::single_threaded_observable_vector<winrt::Last_Music_Player::TrackInfo>()
+        };
+        // User-liked tracks — populates the Liked Songs Highlights carousel.
+        winrt::Windows::Foundation::Collections::IObservableVector<winrt::Last_Music_Player::TrackInfo> m_homeLikedTracks{
+            winrt::single_threaded_observable_vector<winrt::Last_Music_Player::TrackInfo>()
+        };
+        winrt::Windows::Foundation::Collections::IObservableVector<winrt::Last_Music_Player::TrackInfo> m_browseTracks{
+            winrt::single_threaded_observable_vector<winrt::Last_Music_Player::TrackInfo>()
+        };
+        winrt::Windows::Foundation::Collections::IObservableVector<winrt::Last_Music_Player::TrackInfo> m_searchTracks{
+            winrt::single_threaded_observable_vector<winrt::Last_Music_Player::TrackInfo>()
+        };
+        winrt::Windows::Foundation::Collections::IObservableVector<winrt::Last_Music_Player::TrackInfo> m_librarySongs{
+            winrt::single_threaded_observable_vector<winrt::Last_Music_Player::TrackInfo>()
+        };
+        winrt::Windows::Foundation::Collections::IObservableVector<winrt::Last_Music_Player::TrackInfo> m_libraryGenres{
+            winrt::single_threaded_observable_vector<winrt::Last_Music_Player::TrackInfo>()
+        };
+        winrt::Windows::Foundation::Collections::IObservableVector<winrt::Last_Music_Player::TrackInfo> m_manualPlaylists{
+            winrt::single_threaded_observable_vector<winrt::Last_Music_Player::TrackInfo>()
+        };
+        winrt::Windows::Foundation::Collections::IObservableVector<winrt::Last_Music_Player::TrackInfo> m_autoPlaylists{
+            winrt::single_threaded_observable_vector<winrt::Last_Music_Player::TrackInfo>()
+        };
+        winrt::Windows::Foundation::Collections::IObservableVector<winrt::Last_Music_Player::TrackInfo> m_sidebarPlaylists{
+            winrt::single_threaded_observable_vector<winrt::Last_Music_Player::TrackInfo>()
+        };
+        winrt::Windows::Foundation::Collections::IObservableVector<winrt::Last_Music_Player::TrackInfo> m_libraryDetailTracks{
+            winrt::single_threaded_observable_vector<winrt::Last_Music_Player::TrackInfo>()
+        };
+        winrt::Windows::Foundation::Collections::IObservableVector<winrt::Last_Music_Player::TrackInfo> m_upNextQueue{
+            winrt::single_threaded_observable_vector<winrt::Last_Music_Player::TrackInfo>()
+        };
+        winrt::Windows::Foundation::Collections::IObservableVector<winrt::Last_Music_Player::TrackInfo> m_albums{
+            winrt::single_threaded_observable_vector<winrt::Last_Music_Player::TrackInfo>()
+        };
+        winrt::Windows::Foundation::Collections::IObservableVector<winrt::Last_Music_Player::TrackInfo> m_artists{
+            winrt::single_threaded_observable_vector<winrt::Last_Music_Player::TrackInfo>()
+        };
+        bool m_isMuted{ false };
+        double m_volumeBeforeMute{ 50.0 }; // slider units (0-100)
+        // Suppresses VolumeSlider_ValueChanged persistence. Defaults TRUE so
+        // the slider's XAML default (Value="50") and any template/startup
+        // ValueChanged cannot clobber the saved level before it is restored.
+        // The Loaded restore flips it false once the real value is applied;
+        // mute also raises it transiently so muting never persists 0.
+        bool m_suppressVolumePersist{ true };
+        winrt::Microsoft::UI::Xaml::DispatcherTimer m_volumePersistTimer{ nullptr };
+        bool m_volumePersistQueued{ false };
+        double m_pendingPersistedVolume{ 0.7 };
+        uint64_t m_discordReconnectAttemptMs{ 0 };
+        bool m_queueRailForced{ false };
+        bool m_fullScreenOpen{ false };
+        PlaybackSink m_sink{ PlaybackSink::Local };
+        CastSessionState m_castSession;
+        LastMusicPlayer::Backend::CastEngine m_cast;
+        std::vector<winrt::Last_Music_Player::TrackInfo> m_homeRecentHistory;
+        std::unordered_map<std::wstring, uint32_t> m_homePlayCounts;
+        std::unordered_map<std::wstring, uint64_t> m_homeLastPlayedOrder;
+        std::unordered_map<std::wstring, std::vector<winrt::Last_Music_Player::TrackInfo>> m_homeMixes;
+        // Genre-clustered Daily Mix inputs, loaded off the UI thread during home
+        // hydration. m_homeRankedGenres is play-weighted (LoadTopGenres),
+        // m_homeGenrePools maps each ranked genre to its full DB track set, and
+        // m_homeMixGenres records which genre (if any) drives each daily mix id
+        // — used for the dynamic card labels and the provider-fill queries.
+        std::vector<std::wstring> m_homeRankedGenres;
+        std::unordered_map<std::wstring, std::vector<winrt::Last_Music_Player::TrackInfo>> m_homeGenrePools;
+        std::unordered_map<std::wstring, std::wstring> m_homeMixGenres;
+        std::unordered_map<std::wstring, std::vector<winrt::Last_Music_Player::TrackInfo>> m_remoteSearchCache;
+        LastMusicPlayer::Backend::LibraryStats m_libraryStats;
+        std::vector<winrt::Last_Music_Player::TrackInfo> m_catalogTracks;
+        std::vector<winrt::Last_Music_Player::TrackInfo> m_browseAllResults;
+        std::vector<winrt::Last_Music_Player::TrackInfo> m_librarySongAllResults;
+        std::vector<winrt::Last_Music_Player::TrackInfo> m_libraryDetailAllResults;
+        std::wstring m_browseFilter{ L"All" };
+        std::wstring m_browseSort{ L"DateAdded" };
+        bool m_browseGridMode{ false };
+        bool m_catalogLoaded{ false };
+        bool m_browseResultsValid{ false };
+        bool m_browsePageLoading{ false };
+        bool m_librarySongsPageLoading{ false };
+        bool m_libraryDetailPageLoading{ false };
+        uint64_t m_browsePageLoadId{ 0 };
+        uint64_t m_librarySongsPageLoadId{ 0 };
+        uint64_t m_libraryDetailPageLoadId{ 0 };
+        int m_browseMatchedCount{ 0 };
+        double m_browseMatchedSeconds{ 0.0 };
+        int m_librarySongsMatchedCount{ 0 };
+        double m_librarySongsMatchedSeconds{ 0.0 };
+        int m_libraryDetailMatchedCount{ 0 };
+        double m_libraryDetailMatchedSeconds{ 0.0 };
+        LoadState m_homeLoadState{ LoadState::NotLoaded };
+        LoadState m_browseLoadState{ LoadState::NotLoaded };
+        LoadState m_libraryAlbumsState{ LoadState::NotLoaded };
+        LoadState m_libraryArtistsState{ LoadState::NotLoaded };
+        LoadState m_librarySongsState{ LoadState::NotLoaded };
+        LoadState m_libraryGenresState{ LoadState::NotLoaded };
+        LoadState m_libraryPlaylistsState{ LoadState::NotLoaded };
+        LoadState m_libraryDetailState{ LoadState::NotLoaded };
+        std::wstring m_libraryPlaylistFilter{ L"Manual" };
+        std::wstring m_libraryDetailKind;
+        std::wstring m_libraryDetailKey;
+        std::wstring m_libraryDetailSubtitle;
+        winrt::Microsoft::UI::Xaml::Media::ImageSource m_libraryDetailFallbackArt{ nullptr };
+        uint64_t m_homePlaySequence{ 0 };
+        // Last-played track restored on launch but not yet loaded into the audio
+        // engine; the first Play press plays it. Cleared once any track plays.
+        winrt::Last_Music_Player::TrackInfo m_pendingResumeTrack{ nullptr };
+        HomeHydrationState m_homeHydration;
+        uint64_t m_browseHydrationEpoch{ 0 };
+        uint64_t m_libraryHydrationEpoch{ 0 };
+        uint64_t m_libraryDetailHydrationEpoch{ 0 };
+        uint64_t m_searchDebounceId{ 0 };
+        uint64_t m_searchRequestId{ 0 };
+        uint64_t m_nowPlayingArtworkEpoch{ 0 };
+        winrt::Microsoft::UI::Xaml::DispatcherTimer m_playbackProgressTimer{ nullptr };
+        bool m_isSearchMode{ false };
+        bool m_isUpdatingSlider = false;
+        bool m_loadingSettings = false;
+        // Suppresses re-entrant chip Checked events when SyncActiveEqualizerPreset
+        // or ApplyEqualizerPreset programmatically toggles preset chips.
+        bool m_skipPresetSync = false;
+        bool m_settingsCompactLayout = false;
+        bool m_forceExit = false;
+        HWND m_hwnd{ nullptr };
+        // SMTC bound to our window via ISystemMediaTransportControlsInterop.
+        // Unpackaged Win32 / WinAppSDK apps need this to participate in the
+        // OS's global media-key routing; the SMTC returned by
+        // MediaPlayer.SystemMediaTransportControls is player-internal and
+        // doesn't propagate to the Win+V quick-settings session list, so
+        // media keys ignore us. Initialized once after m_hwnd is known.
+        winrt::Windows::Media::SystemMediaTransportControls m_windowSmtc{ nullptr };
+        winrt::Microsoft::UI::Windowing::AppWindow m_appWindow{ nullptr };
+        std::shared_ptr<LastMusicPlayer::Backend::TrayIcon> m_trayIcon;
+        std::shared_ptr<LastMusicPlayer::Backend::DiscordPresence> m_discord;
+        std::vector<winrt::hstring> m_outputDeviceIds;
+        std::vector<winrt::Microsoft::UI::Xaml::Controls::Slider> m_equalizerSliders;
+        bool m_updatingBrowseChips = false;
+        bool m_xamlReadyForEvents = false;
+        winrt::hstring m_selectedSettingsSection{ L"Profile" };
+        winrt::hstring m_currentNav{ L"Home" };
+        std::shared_ptr<std::atomic<uint64_t>> m_appStateSaveVersion{ std::make_shared<std::atomic<uint64_t>>(0) };
+
+        // Nav/accent brushes captured off the resolved XAML so we never do a
+        // programmatic lookup of ThemeDictionaries keys (a WinUI pitfall).
+        bool m_accentBrushesCaptured = false;
+        winrt::Microsoft::UI::Xaml::Media::Brush m_brushAccent{ nullptr };
+        winrt::Microsoft::UI::Xaml::Media::Brush m_brushAccentSoft{ nullptr };
+        winrt::Microsoft::UI::Xaml::Media::Brush m_brushStroke{ nullptr };
+        winrt::Microsoft::UI::Xaml::Media::Brush m_brushGlyphIdle{ nullptr };
+        winrt::Microsoft::UI::Xaml::Media::Brush m_brushLabelIdle{ nullptr };
+        winrt::Microsoft::UI::Xaml::Media::Brush m_brushTransparent{ nullptr };
+
+        // Lyrics state. Service holds HTTP + parse + cache; here we only retain
+        // what the highlight tick needs on each frame.
+        std::shared_ptr<LastMusicPlayer::Backend::LyricsService> m_lyricsService;
+        std::vector<LastMusicPlayer::Backend::LyricLine> m_currentLyricsSynced;
+        int32_t m_currentLyricLineIndex{ -1 };
+        std::wstring m_lyricsLoadedKey;
+        uint64_t m_lyricsHydrationEpoch{ 0 };
+        // Debounce timer for lyrics fetches on rapid track changes;
+        // see QueueLyricsHydration().
+        winrt::Microsoft::UI::Xaml::DispatcherTimer m_lyricsHydrationTimer{ nullptr };
+        bool m_railOnLyrics{ false };
+    };
+}
+
+namespace winrt::Last_Music_Player::factory_implementation
+{
+    struct MainWindow : MainWindowT<MainWindow, implementation::MainWindow>
+    {
+    };
+}

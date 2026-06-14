@@ -1,0 +1,52 @@
+LAST MUSIC PLAYER - THIRD-PARTY NOTICES
+
+Last Music Player includes or is built with third-party software. Those
+components are governed by their own terms, not the Last Projects License.
+
+Complete copies of the applicable license and notice files are stored in:
+
+  licenses/third-party/
+
+They are also installed under:
+
+  Licenses/ThirdParty/
+
+The bundle currently covers the dependency versions declared in
+packages.config and the self-contained Windows App SDK runtime shipped by the
+Release build:
+
+  Inno Setup 6.7.3 (installer packaging)
+  Microsoft.Web.WebView2 1.0.3179.45
+  Microsoft.Windows.CppWinRT 2.0.250303.1
+  Microsoft.Windows.ImplementationLibrary 1.0.260126.7
+  Microsoft.Windows.SDK.BuildTools 10.0.26100.7705
+  Microsoft.Windows.SDK.BuildTools.MSIX 1.7.20250829.1
+  Microsoft.WindowsAppSDK 1.8.260209005
+  Microsoft.WindowsAppSDK.AI 1.8.47
+  Microsoft.WindowsAppSDK.Base 1.8.251216001
+  Microsoft.WindowsAppSDK.DWrite 1.8.25122902
+  Microsoft.WindowsAppSDK.Foundation 1.8.260203002
+  Microsoft.WindowsAppSDK.InteractiveExperiences 1.8.260125001
+  Microsoft.WindowsAppSDK.ML 1.8.2124
+  Microsoft.WindowsAppSDK.Runtime 1.8.260209005
+  Microsoft.WindowsAppSDK.Widgets 1.8.251231004
+  Microsoft.WindowsAppSDK.WinUI 1.8.260204000
+  SQLite amalgamation (public domain)
+
+Some Microsoft packages include software from additional authors. Their full
+attributions and license texts appear in the corresponding NOTICE or
+ThirdPartyNotices file in licenses/third-party. Do not remove those files from
+a redistributed release.
+
+SQLite
+------
+
+The SQLite source code is dedicated to the public domain by its authors.
+See licenses/third-party/SQLite-Public-Domain.txt and:
+
+  https://www.sqlite.org/copyright.html
+
+No endorsement by any third-party author or licensor is implied.
+
+When a dependency version changes, refresh this notice bundle from the exact
+restored package versions before publishing a release.

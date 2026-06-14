@@ -1,0 +1,9 @@
+SQLite Public Domain Notice
+
+The SQLite source code is dedicated to the public domain by its authors.
+SQLite is not licensed under the Last Projects License.
+
+Official copyright and public-domain information:
+https://www.sqlite.org/copyright.html
+
+The SQLite authors provide the software without warranty.
