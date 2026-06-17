@@ -797,6 +797,42 @@ namespace winrt::Last_Music_Player::implementation
             return;
         }
         m_discord->SetPlaybackState(isPlaying, positionSeconds, durationSeconds);
+        m_discordPresenceRefreshMs = ::GetTickCount64();
+    }
+
+    void MainWindow::RefreshDiscordPresenceIfNeeded(bool isPlaying, double positionSeconds, double durationSeconds)
+    {
+        if (!SettingsManagerService().GetBool(L"DiscordPresence", false))
+        {
+            return;
+        }
+
+        auto now = ::GetTickCount64();
+        bool connected = m_discord && m_discord->IsConnected();
+        if (!connected)
+        {
+            if (m_discordReconnectAttemptMs != 0 && now - m_discordReconnectAttemptMs < 5000)
+            {
+                return;
+            }
+            m_discordReconnectAttemptMs = now;
+        }
+        else
+        {
+            if (m_discordPresenceRefreshMs != 0 && now - m_discordPresenceRefreshMs < 60000)
+            {
+                return;
+            }
+            m_discordPresenceRefreshMs = now;
+        }
+
+        try
+        {
+            UpdateDiscordPlaybackState(isPlaying, positionSeconds, durationSeconds);
+        }
+        catch (...)
+        {
+        }
     }
 
     void MainWindow::UpdateDiscordNowPlaying(winrt::Last_Music_Player::TrackInfo const& track)
@@ -838,6 +874,7 @@ namespace winrt::Last_Music_Player::implementation
         payload.isPlaying = playing;
 
         m_discord->SetNowPlaying(payload);
+        m_discordPresenceRefreshMs = ::GetTickCount64();
 
         if (!m_discord->IsConnected())
         {

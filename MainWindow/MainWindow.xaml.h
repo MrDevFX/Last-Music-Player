@@ -353,6 +353,7 @@ namespace winrt::Last_Music_Player::implementation
         bool IsDiscordPlaybackActive(winrt::Windows::Media::Playback::MediaPlaybackState state);
         void SampleDiscordPlaybackSnapshot(bool& isPlaying, double& positionSeconds, double& durationSeconds);
         void UpdateDiscordPlaybackState(bool isPlaying, double positionSeconds, double durationSeconds);
+        void RefreshDiscordPresenceIfNeeded(bool isPlaying, double positionSeconds, double durationSeconds);
         winrt::Windows::Foundation::IAsyncAction ResolveDiscordArtworkAsync(
             winrt::hstring trackTitle, winrt::hstring trackArtist);
         void RebuildUpNextQueue();
@@ -566,6 +567,7 @@ namespace winrt::Last_Music_Player::implementation
         bool m_volumePersistQueued{ false };
         double m_pendingPersistedVolume{ 0.7 };
         uint64_t m_discordReconnectAttemptMs{ 0 };
+        uint64_t m_discordPresenceRefreshMs{ 0 };
         bool m_queueRailForced{ false };
         bool m_fullScreenOpen{ false };
         PlaybackSink m_sink{ PlaybackSink::Local };

@@ -1003,27 +1003,10 @@ namespace winrt::Last_Music_Player::implementation
             {
                 icon.Glyph(glyph);
             }
-            if (SettingsManagerService().GetBool(L"DiscordPresence", false) &&
-                m_castSession.IsPlaying &&
-                (!m_discord || !m_discord->IsConnected()))
-            {
-                auto reconnectNow = ::GetTickCount64();
-                if (m_discordReconnectAttemptMs == 0 || reconnectNow - m_discordReconnectAttemptMs >= 5000)
-                {
-                    m_discordReconnectAttemptMs = reconnectNow;
-                    try
-                    {
-                        auto current = AudioPlayerService().GetCurrentTrack();
-                        if (current)
-                        {
-                            UpdateDiscordNowPlaying(current);
-                        }
-                    }
-                    catch (...)
-                    {
-                    }
-                }
-            }
+            RefreshDiscordPresenceIfNeeded(
+                m_castSession.IsPlaying,
+                currentSeconds,
+                m_castSession.DurationSeconds);
             return;
         }
 
@@ -1054,27 +1037,10 @@ namespace winrt::Last_Music_Player::implementation
         }
 
         auto state = session.PlaybackState();
-        if (SettingsManagerService().GetBool(L"DiscordPresence", false) &&
-            state == winrt::Windows::Media::Playback::MediaPlaybackState::Playing &&
-            (!m_discord || !m_discord->IsConnected()))
-        {
-            auto now = ::GetTickCount64();
-            if (m_discordReconnectAttemptMs == 0 || now - m_discordReconnectAttemptMs >= 5000)
-            {
-                m_discordReconnectAttemptMs = now;
-                try
-                {
-                    auto current = AudioPlayerService().GetCurrentTrack();
-                    if (current)
-                    {
-                        UpdateDiscordNowPlaying(current);
-                    }
-                }
-                catch (...)
-                {
-                }
-            }
-        }
+        RefreshDiscordPresenceIfNeeded(
+            IsDiscordPlaybackActive(state),
+            currentSeconds,
+            totalSeconds);
         auto glyph = (state == winrt::Windows::Media::Playback::MediaPlaybackState::Playing)
             ? L"\xE769"
             : L"\xE768";

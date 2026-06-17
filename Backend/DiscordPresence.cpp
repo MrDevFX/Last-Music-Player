@@ -366,7 +366,13 @@ namespace LastMusicPlayer::Backend
             }
         }
 
-        if (WriteFrame(1, json))
+        bool sent = WriteFrame(1, json);
+        if (!sent && Connect())
+        {
+            sent = WriteFrame(1, json);
+        }
+
+        if (sent)
         {
             m_lastSendAt   = std::chrono::steady_clock::now();
             m_lastSentJson = json;
