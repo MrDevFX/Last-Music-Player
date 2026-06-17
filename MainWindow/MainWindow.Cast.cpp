@@ -74,6 +74,10 @@ namespace winrt::Last_Music_Player::implementation
                 }
                 self->m_castSession.ProgressStampMs = ::GetTickCount64();
                 self->ApplyPlaybackProgress(self->m_castSession.CurrentSeconds, self->m_castSession.DurationSeconds);
+                self->UpdateDiscordPlaybackState(
+                    self->m_castSession.IsPlaying,
+                    self->m_castSession.CurrentSeconds,
+                    self->m_castSession.DurationSeconds);
             });
         };
 
@@ -102,6 +106,7 @@ namespace winrt::Last_Music_Player::implementation
                 self->m_castSession.LastStatusRequestMs = 0;
                 self->EnsureAccentBrushes();
                 if (self->CastIcon()) self->CastIcon().Foreground(self->m_brushGlyphIdle);
+                self->UpdateDiscordPlaybackState(false, 0.0, 0.0);
             });
         };
     }
@@ -316,6 +321,7 @@ namespace winrt::Last_Music_Player::implementation
             AudioPlayerService().GetMediaPlayer().Pause();
             PlayPauseIcon().Glyph(L"\xE768");
             if (FsPlayPauseIcon()) FsPlayPauseIcon().Glyph(L"\xE768");
+            UpdateDiscordPlaybackState(false, 0.0, current ? current.DurationSeconds() : 0.0);
         }
     }
 

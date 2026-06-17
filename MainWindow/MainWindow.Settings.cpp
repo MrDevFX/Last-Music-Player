@@ -724,6 +724,81 @@ namespace winrt::Last_Music_Player::implementation
         }
     }
 
+    bool MainWindow::IsDiscordPlaybackActive(winrt::Windows::Media::Playback::MediaPlaybackState state)
+    {
+        using winrt::Windows::Media::Playback::MediaPlaybackState;
+        return state == MediaPlaybackState::Playing
+            || state == MediaPlaybackState::Opening
+            || state == MediaPlaybackState::Buffering;
+    }
+
+    void MainWindow::SampleDiscordPlaybackSnapshot(bool& isPlaying, double& positionSeconds, double& durationSeconds)
+    {
+        isPlaying = true;
+        positionSeconds = 0.0;
+        durationSeconds = 0.0;
+
+        if (m_sink == PlaybackSink::Cast)
+        {
+            isPlaying = m_castSession.IsPlaying;
+            positionSeconds = m_castSession.CurrentSeconds;
+            if (m_castSession.IsPlaying && m_castSession.ProgressStampMs > 0)
+            {
+                auto now = ::GetTickCount64();
+                positionSeconds += static_cast<double>(now - m_castSession.ProgressStampMs) / 1000.0;
+            }
+            durationSeconds = m_castSession.DurationSeconds;
+            if (durationSeconds <= 0.5)
+            {
+                auto current = AudioPlayerService().GetCurrentTrack();
+                if (current && current.DurationSeconds() > 0.5)
+                {
+                    durationSeconds = current.DurationSeconds();
+                }
+            }
+            return;
+        }
+
+        try
+        {
+            auto session = AudioPlayerService().GetMediaPlayer().PlaybackSession();
+            auto state = session.PlaybackState();
+            isPlaying = IsDiscordPlaybackActive(state);
+            auto natural = static_cast<double>(session.NaturalDuration().count()) / 10000000.0;
+            if (natural > 0.5)
+            {
+                durationSeconds = natural;
+            }
+            positionSeconds = static_cast<double>(session.Position().count()) / 10000000.0;
+        }
+        catch (...)
+        {
+        }
+    }
+
+    void MainWindow::UpdateDiscordPlaybackState(bool isPlaying, double positionSeconds, double durationSeconds)
+    {
+        if (!SettingsManagerService().GetBool(L"DiscordPresence", false))
+        {
+            return;
+        }
+        auto current = AudioPlayerService().GetCurrentTrack();
+        if (!current)
+        {
+            if (m_discord)
+            {
+                m_discord->Clear();
+            }
+            return;
+        }
+        if (!m_discord || !m_discord->IsConnected())
+        {
+            UpdateDiscordNowPlaying(current);
+            return;
+        }
+        m_discord->SetPlaybackState(isPlaying, positionSeconds, durationSeconds);
+    }
+
     void MainWindow::UpdateDiscordNowPlaying(winrt::Last_Music_Player::TrackInfo const& track)
     {
         if (!track || !SettingsManagerService().GetBool(L"DiscordPresence", false))
@@ -749,20 +824,15 @@ namespace winrt::Last_Music_Player::implementation
         // the Discord activity card ("Source: Local" vs "Source: Remote").
         payload.isLocal = (std::wstring{ track.SourceKind().c_str() } == L"local");
 
-        // Prefer the live session for duration + position. The DB value
-        // is the fallback in case NaturalDuration hasn't been reported
-        // yet right after a track loads.
+        // Prefer the active playback sink for duration + position. Local
+        // MediaPlayer enters Opening/Buffering during normal playback and is
+        // intentionally paused while casting, so Discord must not treat every
+        // non-Playing MediaPlayer state as user-paused.
         double position = 0.0;
+        double duration = payload.durationSeconds;
         bool playing = true;
-        try
-        {
-            auto session = AudioPlayerService().GetMediaPlayer().PlaybackSession();
-            auto natural = static_cast<double>(session.NaturalDuration().count()) / 10000000.0;
-            if (natural > 0.5) payload.durationSeconds = natural;
-            position = static_cast<double>(session.Position().count()) / 10000000.0;
-            playing = (session.PlaybackState() == winrt::Windows::Media::Playback::MediaPlaybackState::Playing);
-        }
-        catch (...) {}
+        SampleDiscordPlaybackSnapshot(playing, position, duration);
+        if (duration > 0.5) payload.durationSeconds = duration;
 
         payload.positionSeconds = position;
         payload.isPlaying = playing;
@@ -834,7 +904,8 @@ namespace winrt::Last_Music_Player::implementation
         }
         m_discord->SetArtworkProxyUrl(
             std::wstring{ proxyUrl.c_str() },
-            std::wstring{ trackTitle.c_str() });
+            std::wstring{ trackTitle.c_str() },
+            std::wstring{ trackArtist.c_str() });
     }
 
     void MainWindow::UpdateAboutStats()

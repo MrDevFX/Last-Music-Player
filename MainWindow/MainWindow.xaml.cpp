@@ -285,14 +285,22 @@ namespace winrt::Last_Music_Player::implementation
             {
                 RefreshPlaybackProgress();
                 if (m_sink != PlaybackSink::Local) return;
-                if (m_discord && m_discord->IsConnected())
+                if (SettingsManagerService().GetBool(L"DiscordPresence", false))
                 {
                     // Discord's progress bar only renders when the
                     // activity carries non-zero duration. UpdateDiscord
                     // NowPlaying runs while the media is still Opening
                     // and gets 0 for NaturalDuration; this catches the
                     // late update and triggers a re-send with timestamps.
-                    m_discord->SetDuration(duration);
+                    bool playing = true;
+                    double position = 0.0;
+                    double snapshotDuration = duration;
+                    SampleDiscordPlaybackSnapshot(playing, position, snapshotDuration);
+                    if (snapshotDuration <= 0.5)
+                    {
+                        snapshotDuration = duration;
+                    }
+                    UpdateDiscordPlaybackState(playing, position, snapshotDuration);
                 }
             });
         });
@@ -311,7 +319,7 @@ namespace winrt::Last_Music_Player::implementation
             dispatcher.TryEnqueue([this, state, position, duration]()
             {
                 if (m_sink != PlaybackSink::Local) return;
-                bool playing = (state == winrt::Windows::Media::Playback::MediaPlaybackState::Playing);
+                bool playing = IsDiscordPlaybackActive(state);
                 auto glyph = playing
                     ? L"\xE769"  // Pause icon
                     : L"\xE768"; // Play icon
@@ -341,10 +349,7 @@ namespace winrt::Last_Music_Player::implementation
                     try { m_windowSmtc.PlaybackStatus(s); } catch (...) {}
                 }
 
-                if (m_discord && m_discord->IsConnected())
-                {
-                    m_discord->SetPlaybackState(playing, position, duration);
-                }
+                UpdateDiscordPlaybackState(playing, position, duration);
             });
         });
 

@@ -350,6 +350,9 @@ namespace winrt::Last_Music_Player::implementation
         void ApplyDiscordPresence();
         void UpdateAboutStats();
         void UpdateDiscordNowPlaying(winrt::Last_Music_Player::TrackInfo const& track);
+        bool IsDiscordPlaybackActive(winrt::Windows::Media::Playback::MediaPlaybackState state);
+        void SampleDiscordPlaybackSnapshot(bool& isPlaying, double& positionSeconds, double& durationSeconds);
+        void UpdateDiscordPlaybackState(bool isPlaying, double positionSeconds, double durationSeconds);
         winrt::Windows::Foundation::IAsyncAction ResolveDiscordArtworkAsync(
             winrt::hstring trackTitle, winrt::hstring trackArtist);
         void RebuildUpNextQueue();

@@ -252,9 +252,10 @@ namespace LastMusicPlayer::Backend
         // Also accepts bare asset keys (no slashes) for forward-compat
         // with a future dev-portal-uploaded fallback.
         bool isHttpsUrl = p.artworkUrl.rfind(L"https://", 0) == 0;
+        bool isDiscordExternalAsset = p.artworkUrl.rfind(L"mp:external/", 0) == 0;
         bool isBareAssetKey = !p.artworkUrl.empty()
             && p.artworkUrl.find(L'/') == std::wstring::npos;
-        if (isHttpsUrl || isBareAssetKey)
+        if (isHttpsUrl || isDiscordExternalAsset || isBareAssetKey)
         {
             os << ",\"assets\":{\"large_image\":\"" << JsonEscape(p.artworkUrl) << "\"";
             // Third-line label on the activity card. Always advertise the
@@ -387,7 +388,9 @@ namespace LastMusicPlayer::Backend
         bool titleChanged = false;
         {
             std::scoped_lock lock{ m_mutex };
-            titleChanged = !m_last || m_last->title != payload.title;
+            titleChanged = !m_last
+                || m_last->title != payload.title
+                || m_last->artist != payload.artist;
             m_last = payload;
         }
 
@@ -435,7 +438,10 @@ namespace LastMusicPlayer::Backend
         SendOrDefer(json, /*bypassGate*/ false);
     }
 
-    void DiscordPresence::SetArtworkProxyUrl(std::wstring const& proxyUrl, std::wstring const& originalTitle)
+    void DiscordPresence::SetArtworkProxyUrl(
+        std::wstring const& proxyUrl,
+        std::wstring const& originalTitle,
+        std::wstring const& originalArtist)
     {
         if (proxyUrl.empty())
         {
@@ -451,6 +457,10 @@ namespace LastMusicPlayer::Backend
                 return;
             }
             if (m_last->title != originalTitle)
+            {
+                return;
+            }
+            if (m_last->artist != originalArtist)
             {
                 return;
             }

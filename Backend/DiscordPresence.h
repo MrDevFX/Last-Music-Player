@@ -53,7 +53,10 @@ namespace LastMusicPlayer::Backend
         // after the provider service has converted an HTTPS URL to a Discord
         // External Asset `mp:external/...` proxy URL) and re-emits the activity.
         // `proxyUrl` must already be in the form Discord accepts.
-        void SetArtworkProxyUrl(std::wstring const& proxyUrl, std::wstring const& originalTitle);
+        void SetArtworkProxyUrl(
+            std::wstring const& proxyUrl,
+            std::wstring const& originalTitle,
+            std::wstring const& originalArtist);
         void Clear();
 
     private:

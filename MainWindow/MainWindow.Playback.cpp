@@ -634,12 +634,14 @@ namespace winrt::Last_Music_Player::implementation
 
         if (m_sink == PlaybackSink::Cast)
         {
-            bool wasPlaying = m_castSession.IsPlaying;
-            if (wasPlaying) m_cast.Pause(); else m_cast.Play();
-            m_castSession.IsPlaying = !wasPlaying;
-            auto glyph = wasPlaying ? L"\xE768" : L"\xE769";
-            PlayPauseIcon().Glyph(glyph);
-            if (FsPlayPauseIcon()) FsPlayPauseIcon().Glyph(glyph);
+            if (m_castSession.IsPlaying)
+            {
+                TransportPause();
+            }
+            else
+            {
+                TransportPlay();
+            }
             return;
         }
 
@@ -791,6 +793,7 @@ namespace winrt::Last_Music_Player::implementation
             m_cast.RequestStatus();
             PlayPauseIcon().Glyph(L"\xE769");
             if (FsPlayPauseIcon()) FsPlayPauseIcon().Glyph(L"\xE769");
+            UpdateDiscordPlaybackState(true, m_castSession.CurrentSeconds, m_castSession.DurationSeconds);
             return;
         }
         AudioPlayerService().GetMediaPlayer().Play();
@@ -810,6 +813,7 @@ namespace winrt::Last_Music_Player::implementation
             m_castSession.IsPlaying = false;
             ApplyPlaybackProgress(m_castSession.CurrentSeconds, m_castSession.DurationSeconds);
             m_cast.RequestStatus();
+            UpdateDiscordPlaybackState(false, m_castSession.CurrentSeconds, m_castSession.DurationSeconds);
         }
         else
         {
@@ -828,15 +832,17 @@ namespace winrt::Last_Music_Player::implementation
             ApplyPlaybackProgress(m_castSession.CurrentSeconds, m_castSession.DurationSeconds);
             m_cast.Seek(seconds);
             m_cast.RequestStatus();
+            UpdateDiscordPlaybackState(m_castSession.IsPlaying, seconds, m_castSession.DurationSeconds);
             return;
         }
         auto newPosition = std::chrono::seconds(static_cast<long long>(seconds));
         AudioPlayerService().GetMediaPlayer().PlaybackSession().Position(newPosition);
 
-        if (m_discord && m_discord->IsConnected())
-        {
-            m_discord->SetPosition(seconds);
-        }
+        bool playing = true;
+        double position = seconds;
+        double duration = 0.0;
+        SampleDiscordPlaybackSnapshot(playing, position, duration);
+        UpdateDiscordPlaybackState(playing, seconds, duration);
     }
 
     void MainWindow::TransportSetVolume(double volume)
@@ -996,6 +1002,27 @@ namespace winrt::Last_Music_Player::implementation
             if (auto icon = FsPlayPauseIcon())
             {
                 icon.Glyph(glyph);
+            }
+            if (SettingsManagerService().GetBool(L"DiscordPresence", false) &&
+                m_castSession.IsPlaying &&
+                (!m_discord || !m_discord->IsConnected()))
+            {
+                auto reconnectNow = ::GetTickCount64();
+                if (m_discordReconnectAttemptMs == 0 || reconnectNow - m_discordReconnectAttemptMs >= 5000)
+                {
+                    m_discordReconnectAttemptMs = reconnectNow;
+                    try
+                    {
+                        auto current = AudioPlayerService().GetCurrentTrack();
+                        if (current)
+                        {
+                            UpdateDiscordNowPlaying(current);
+                        }
+                    }
+                    catch (...)
+                    {
+                    }
+                }
             }
             return;
         }
